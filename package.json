@@ -1,5 +1,5 @@
 {
-  "name": "superpeer",
+  "name": "shogun-superPeer",
   "version": "0.6.0",
   "description": "Persistent Gun super peer supporting HTTP and HTTPS/SSL.",
   "main": "index.js",
@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/TensorTom/superPeer.git"
+    "url": "git+https://github.com/scobru/shogun-superPeer.git"
   },
   "keywords": [
     "gundb",
@@ -23,9 +23,9 @@
   "author": "TensorTom",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Dletta/superPeer/issues"
+    "url": "https://github.com/scobru/shogun-superPeer/issues"
   },
-  "homepage": "https://github.com/Dletta/superPeer#readme",
+  "homepage": "https://github.com/scobru/shogun-superPeer#readme",
   "dependencies": {
     "express": "^4.17.1",
     "gun": "^0.2019.612",

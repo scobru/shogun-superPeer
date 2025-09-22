@@ -98,7 +98,3 @@ app.use(express.static('view'));
 app.get('*', function(_, res) {
   res.sendFile(view);
 });
-
-
-// Base code by @thinkingjoules
-// SSL/HTTPS & presistence by @TensorTom
