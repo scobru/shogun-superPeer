@@ -1,14 +1,17 @@
-const path = require("path");
-const express = require("express");
-const fs = require("fs");
-const https = require("https");
-const http = require("http");
-const Gun = require("gun");
-const SEA = require("gun/sea");
-const rtc = require("gun/lib/webrtc");
+import path from "path";
+import express from "express";
+import fs from "fs";
+import https from "https";
+import http from "http";
+import { fileURLToPath } from "url";
+import Gun from "gun";
+import "gun/sea.js";
+import "gun/lib/webrtc.js";
 
-const GunRelays = require("gun-relays");
-const { forceListUpdate } = GunRelays;
+import GunRelays, { forceListUpdate } from "gun-relays";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 let freshRelays = await forceListUpdate();
 
@@ -23,7 +26,7 @@ const baseDir = isPkg ? path.dirname(process.execPath) : __dirname;
 
 console.log(`
 ╔════════════════════════════════════════╗
-║   Shogun SuperPeer - Gun Relay        ║
+║   Shogun SuperPeer - Gun Relay         ║
 ╚════════════════════════════════════════╝
 `);
 console.log(`Starting Shogun SuperPeer...`);
@@ -173,7 +176,7 @@ if (useHTTP) {
   server = http.createServer({}, app).listen(port, function () {
     console.log(`
 ╔════════════════════════════════════════╗
-║  Server Started Successfully! ✓       ║
+║  Server Started Successfully! ✓        ║
 ╚════════════════════════════════════════╝
 `);
     console.log(`🌐 HTTP Server listening on port: ${port}`);

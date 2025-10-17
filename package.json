@@ -4,10 +4,11 @@
   "description": "Persistent Gun super peer supporting HTTP and HTTPS/SSL.",
   "main": "index.js",
   "bin": "index.js",
+  "type": "module",
   "scripts": {
     "start": "npm run server",
-    "start-continuous": "supervisor -t -i . index.js",
-    "server": "node index.js",
+    "start-continuous": "supervisor -t -i . server.js",
+    "server": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "postbuild": "node post-build.js",
     "build": "npx pkg . --out-path dist && node post-build.js",
@@ -52,6 +53,7 @@
     "@peculiar/webcrypto": "^1.4.0",
     "express": "^4.17.1",
     "gun": "^0.2019.612",
+    "gun-relays": "^1.0.2",
     "text-encoding": "^0.7.0"
   },
   "devDependencies": {
