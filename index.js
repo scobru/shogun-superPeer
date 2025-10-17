@@ -7,15 +7,6 @@ const Gun = require("gun");
 const SEA = require("gun/sea");
 const rtc = require("gun/lib/webrtc");
 
-const GunRelays = require("gun-relays");
-const { forceListUpdate } = GunRelays;
-
-let freshRelays = await forceListUpdate();
-
-console.log("freshRelays", freshRelays);
-
-freshRelays.push(`http://localhost:${process.env.PORT}/gun`);
-freshRelays.push(`https://localhost:${process.env.SSL_PORT}/gun`);
 
 // Detect if running as pkg executable
 const isPkg = typeof process.pkg !== "undefined";
@@ -52,7 +43,6 @@ let config = {
     sslPort: 8443,
     sslHost: "example.com",
   },
-  peers: freshRelays,
   logging: {
     logPeersInterval: 5000,
     logDataInterval: 20000,
@@ -90,13 +80,22 @@ console.log(`  HTTPS: ${useSSL} (Port: ${sslPort})`);
 console.log(`  Persistence: ${persistence}`);
 console.log(``);
 
-// Build peers list
 const peers = [
-  config.peers.primary,
-  config.peers.secondary,
-  config.peers.tertiary,
-  config.peers.quaternary,
-].filter((p) => p); // Remove empty/null peers
+    "https://gun-relay.herokuapp.com/gun",
+    "https://peer.wallie.io/gun",
+    "https://gun.defucc.me/gun",
+    "https://a.talkflow.team/gun",
+    "https://relay.shogun-eco.xyz/gun",
+    "https://v5g5jseqhgkp43lppgregcfbvi.srv.us/gun",
+];
+
+
+
+peers.push(`http://localhost:${process.env.PORT}/gun`);
+peers.push(`https://localhost:${process.env.SSL_PORT}/gun`);
+
+
+peers.filter((p) => p); // Remove empty/null peers
 
 let server, sslServer, gun, sslGun;
 
@@ -158,7 +157,7 @@ if (useSSL) {
   console.log(`SSL Gun data path: ${dataPath}`);
 
   sslGun = Gun({
-    peers: peerify ? freshRelays : [],
+    peers: peerify ? peers : [],
     web: sslServer,
     file: dataPath,
     radisk: persistence,
@@ -186,7 +185,7 @@ if (useHTTP) {
   console.log(`Gun data path: ${dataPath}`);
 
   gun = Gun({
-    peers: peerify ? freshRelays : [],
+    peers: peerify ? peers : [],
     web: server,
     file: dataPath,
     localStorage: false,
