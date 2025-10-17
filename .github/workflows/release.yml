@@ -1,0 +1,129 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build (e.g., v0.7.0)'
+        required: true
+
+jobs:
+  build:
+    name: Build Executables
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build executables for all platforms
+        run: npm run build:all
+
+      - name: List built files
+        run: ls -lh dist/
+
+      - name: Calculate checksums
+        run: |
+          cd dist
+          sha256sum shogun-superPeer* > checksums.txt
+          cat checksums.txt
+          cd ..
+
+      - name: Rename executables with version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          cd dist
+          mv shogun-superPeer.exe shogun-superPeer-${VERSION}-win-x64.exe || true
+          mv shogun-superPeer-linux shogun-superPeer-${VERSION}-linux-x64 || true
+          mv shogun-superPeer-macos shogun-superPeer-${VERSION}-macos-x64 || true
+          ls -lh
+          cd ..
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: executables
+          path: |
+            dist/shogun-superPeer-*
+            dist/checksums.txt
+
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            dist/shogun-superPeer-*-win-x64.exe
+            dist/shogun-superPeer-*-linux-x64
+            dist/shogun-superPeer-*-macos-x64
+            dist/checksums.txt
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  test:
+    name: Test Executable
+    needs: build
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: executables
+
+      - name: Make executable (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x shogun-superPeer-*-linux-x64
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x shogun-superPeer-*-macos-x64
+          fi
+
+      - name: Test executable (Linux)
+        if: runner.os == 'Linux'
+        timeout-minutes: 1
+        continue-on-error: true
+        run: |
+          ./shogun-superPeer-*-linux-x64 &
+          SERVER_PID=$!
+          sleep 5
+          kill $SERVER_PID || true
+
+      - name: Test executable (Windows)
+        if: runner.os == 'Windows'
+        timeout-minutes: 1
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $proc = Start-Process -FilePath ".\shogun-superPeer-*-win-x64.exe" -PassThru
+          Start-Sleep -Seconds 5
+          Stop-Process -Id $proc.Id -Force
+
+      - name: Test executable (macOS)
+        if: runner.os == 'macOS'
+        timeout-minutes: 1
+        continue-on-error: true
+        run: |
+          ./shogun-superPeer-*-macos-x64 &
+          SERVER_PID=$!
+          sleep 5
+          kill $SERVER_PID || true
+
