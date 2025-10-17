@@ -91,8 +91,8 @@ const peers = [
 
 
 
-peers.push(`http://localhost:${process.env.PORT}/gun`);
-peers.push(`https://localhost:${process.env.SSL_PORT}/gun`);
+peers.push(`http://localhost:${port}/gun`);
+peers.push(`https://localhost:${sslPort}/gun`);
 
 
 peers.filter((p) => p); // Remove empty/null peers
