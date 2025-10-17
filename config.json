@@ -1,0 +1,23 @@
+{
+  "server": {
+    "useSSL": false,
+    "useHTTP": true,
+    "peerify": true,
+    "persistence": true,
+    "port": 8080,
+    "sslPort": 8443,
+    "sslHost": "example.com"
+  },
+  "peers": {
+    "primary": "https://relay.shogun-eco.xyz/gun",
+    "secondary": "https://peer.wallie.io/gun",
+    "tertiary": "https://gun.defucc.me/gun",
+    "quaternary": "https://a.talkflow.team/gun"
+  },
+  "logging": {
+    "logPeersInterval": 5000,
+    "logDataInterval": 20000,
+    "verbose": true
+  }
+}
+

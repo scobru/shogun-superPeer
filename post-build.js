@@ -51,6 +51,19 @@ async function main() {
     path.join(distDir, 'view')
   );
 
+  // Copy config.json if it exists
+  const configFile = path.join(__dirname, 'config.json');
+  if (fs.existsSync(configFile)) {
+    try {
+      await fs.copy(configFile, path.join(distDir, 'config.json'));
+      log('✓ Copied config.json', colors.green);
+    } catch (error) {
+      log(`✗ Failed to copy config.json: ${error.message}`, colors.yellow);
+    }
+  } else {
+    log('ℹ No config.json found', colors.blue);
+  }
+
   // Copy cert directory if it exists (for SSL users)
   const certDir = path.join(__dirname, 'cert');
   if (fs.existsSync(certDir)) {
@@ -62,13 +75,10 @@ async function main() {
   // Create README in dist
   const readmeContent = `# Shogun SuperPeer Executables
 
-## How to Use
+## Quick Start
 
 ### Windows
-Double-click \`shogun-superPeer-win.exe\` or run from command line:
-\`\`\`
-shogun-superPeer-win.exe
-\`\`\`
+Double-click \`shogun-superPeer.exe\` or run \`TEST.bat\`
 
 ### Linux
 Make executable and run:
@@ -90,6 +100,19 @@ Once started:
 - Web interface: http://localhost:8080
 - Gun endpoint: http://localhost:8080/gun
 
+## Configuration
+
+You can modify settings WITHOUT recompiling!
+
+Edit \`config.json\` to change:
+- Ports (HTTP/HTTPS)
+- SSL settings
+- External peers
+- Logging verbosity
+- Data persistence
+
+See \`CONFIG_HELP.txt\` for detailed configuration guide.
+
 ## Data Storage
 
 Data will be stored in a \`data/\` folder next to the executable.
@@ -98,13 +121,29 @@ Data will be stored in a \`data/\` folder next to the executable.
 
 Press \`Ctrl+C\` in the terminal window.
 
+## Files in this folder
+
+- shogun-superPeer.exe  - Main executable (Windows)
+- config.json           - Configuration file (EDIT THIS!)
+- CONFIG_HELP.txt       - Configuration guide
+- TEST.bat              - Quick test script (Windows)
+- view/                 - Web interface files
+- cert/                 - SSL certificates (optional)
+
 ## Documentation
 
-See the full documentation at: https://github.com/scobru/shogun-superPeer
+Full documentation: https://github.com/scobru/shogun-superPeer
 `;
 
   fs.writeFileSync(path.join(distDir, 'README.txt'), readmeContent);
   log('✓ Created README.txt', colors.green);
+
+  // Create CONFIG_HELP.txt
+  const configHelpPath = path.join(__dirname, 'dist', 'CONFIG_HELP.txt');
+  if (!fs.existsSync(configHelpPath)) {
+    // CONFIG_HELP.txt will be created manually or already exists
+    log('ℹ CONFIG_HELP.txt already in dist', colors.blue);
+  }
 
   log('\n╔════════════════════════════════════════╗', colors.green);
   log('║   Post-Build Complete! ✓              ║', colors.green);

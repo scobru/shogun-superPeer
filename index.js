@@ -1,35 +1,15 @@
-import path from 'path';
-import express from 'express';
-import fs from 'fs';
-import https from 'https';
-import http from 'http';
-import Gun from 'gun';
-import SEA from 'gun/sea.js';
-import rtc from 'gun/lib/webrtc.js';
-import Relays, { forceListUpdate } from 'gun-relays';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const path = require('path');
+const express = require('express');
+const fs = require('fs');
+const https = require('https');
+const http = require('http');
+const Gun = require('gun');
+const SEA = require("gun/sea");
+const rtc = require("gun/lib/webrtc");
 
 // Detect if running as pkg executable
 const isPkg = typeof process.pkg !== 'undefined';
 const baseDir = isPkg ? path.dirname(process.execPath) : __dirname;
-
-const port = (process.env.PORT || 8080); // 8080 can be used with Cloudflare.
-const useSSL = false; // Run SSL/HTTPS server? If set to true, you must supply cert.pem and privkey.pem (See below).
-const useHTTP = true; // Run HTTP server?
-const peerify = true; // Connect HTTP & HTTPS servers as peers of each-other?
-const persistence = true; // Use storage to disk?
-const sslPort = (process.env.PORT || 8443); // 8443 can be used with Cloudflare.
-const sslHost = "example.com"; // The domain of your SSL certificate.
-
-let server, sslServer, gun, sslGun;
-let freshRelays = await forceListUpdate()
-
-freshRelays.push(`http://localhost:${port}/gun`)
-freshRelays.push(`https://${sslHost}:${sslPort}/gun`)
-
 
 console.log(`
 ╔════════════════════════════════════════╗
@@ -44,34 +24,102 @@ console.log(`Base directory: ${baseDir}`);
 process.on('uncaughtException', (error) => {
   console.error('Uncaught Exception:', error);
   console.error('Stack:', error.stack);
-  console.log('\nPress any key to exit...');
-  process.stdin.setRawMode(true);
-  process.stdin.resume();
-  process.stdin.on('data', process.exit.bind(process, 1));
+  console.log('\nPress Ctrl+C to exit...');
 });
 
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });
 
+// Load configuration from config.json or use defaults
+let config = {
+  server: {
+    useSSL: false,
+    useHTTP: true,
+    peerify: true,
+    persistence: true,
+    port: 8080,
+    sslPort: 8443,
+    sslHost: "example.com"
+  },
+  peers: {
+    primary: "https://relay.shogun-eco.xyz/gun",
+    secondary: "https://peer.wallie.io/gun",
+    tertiary: "https://gun.defucc.me/gun",
+    quaternary: "https://a.talkflow.team/gun"
+  },
+  logging: {
+    logPeersInterval: 5000,
+    logDataInterval: 20000,
+    verbose: true
+  }
+};
 
+// Try to load config.json
+const configPath = path.join(baseDir, 'config.json');
+if (fs.existsSync(configPath)) {
+  try {
+    const userConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    config = Object.assign({}, config, userConfig);
+    console.log(`✓ Loaded configuration from: ${configPath}`);
+  } catch (error) {
+    console.warn(`⚠ Could not load config.json: ${error.message}`);
+    console.log(`Using default configuration`);
+  }
+} else {
+  console.log(`ℹ No config.json found, using default configuration`);
+}
+
+// Override with environment variables if present
+const useSSL = process.env.USE_SSL === 'true' || config.server.useSSL;
+const useHTTP = process.env.USE_HTTP !== 'false' && config.server.useHTTP;
+const peerify = config.server.peerify;
+const persistence = config.server.persistence;
+const port = process.env.PORT || config.server.port;
+const sslPort = process.env.SSL_PORT || config.server.sslPort;
+const sslHost = process.env.SSL_HOST || config.server.sslHost;
+
+console.log(`\nConfiguration:`);
+console.log(`  HTTP: ${useHTTP} (Port: ${port})`);
+console.log(`  HTTPS: ${useSSL} (Port: ${sslPort})`);
+console.log(`  Persistence: ${persistence}`);
+console.log(``);
+
+// Build peers list
+const peers = [
+  config.peers.primary,
+  config.peers.secondary,
+  config.peers.tertiary,
+  config.peers.quaternary
+].filter(p => p); // Remove empty/null peers
+
+let server, sslServer, gun, sslGun;
 
 const app = express();
 app.use(Gun.serve);
 
 function logIn(msg){
-    console.log(`in msg:${JSON.stringify(msg)}.........`);
+    if (config.logging.verbose) {
+        console.log(`in msg:${JSON.stringify(msg)}.........`);
+    }
 }
 
 function logOut(msg){
-    console.log(`out msg:${JSON.stringify(msg)}.........`);
+    if (config.logging.verbose) {
+        console.log(`out msg:${JSON.stringify(msg)}.........`);
+    }
 }
+
 function ssLogIn(msg){
-    console.log(`ssl in msg:${JSON.stringify(msg)}.........`);
+    if (config.logging.verbose) {
+        console.log(`ssl in msg:${JSON.stringify(msg)}.........`);
+    }
 }
 
 function ssLogOut(msg){
-    console.log(`ssl out msg:${JSON.stringify(msg)}.........`);
+    if (config.logging.verbose) {
+        console.log(`ssl out msg:${JSON.stringify(msg)}.........`);
+    }
 }
 
 function logPeers() {
@@ -100,7 +148,7 @@ if(useSSL){
     console.log(`SSL Gun data path: ${dataPath}`);
     
     sslGun = Gun({
-        peers: peerify ? freshRelays  : [],
+        peers: [(peerify ? `http://localhost:${port}/gun`  : ''), ...peers],
         web: sslServer,
         file: dataPath,
         radisk: persistence,
@@ -110,6 +158,7 @@ if(useSSL){
     sslGun._.on('in', ssLogIn);
     sslGun._.on('out', ssLogOut);
 }
+
 if(useHTTP){
     server = http.createServer({}, app)
         .listen(port, function () {
@@ -128,7 +177,7 @@ if(useHTTP){
     console.log(`Gun data path: ${dataPath}`);
     
     gun = Gun({
-        peers: peerify ? freshRelays : [],
+        peers: [(peerify ? `https://${sslHost}:${sslPort}/gun` : ''), ...peers],
         web: server,
         file: dataPath,
         localStorage: false,
@@ -140,8 +189,8 @@ if(useHTTP){
     gun._.on('out', logOut);
 }
 
-setInterval(logPeers, 5000); //Log peer list every 5 secs
-setInterval(logData, 20000); //Log gun graph every 20 secs
+setInterval(logPeers, config.logging.logPeersInterval); //Log peer list
+setInterval(logData, config.logging.logDataInterval); //Log gun graph
 
 // Setup static file serving
 const viewDir = path.join(baseDir, 'view');
@@ -151,7 +200,7 @@ console.log(`Looking for view directory at: ${viewDir}`);
 
 // Check if view directory exists
 if (fs.existsSync(viewDir)) {
-  console.log(`View directory found!`);
+  console.log(`✓ View directory found!`);
   app.use(express.static(viewDir));
   
   if (fs.existsSync(viewFile)) {
