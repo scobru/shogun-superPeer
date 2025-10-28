@@ -85,26 +85,15 @@ console.log(`  HTTPS: ${useSSL} (Port: ${sslPort})`);
 console.log(`  Persistence: ${persistence}`);
 console.log(``);
 
-const peers = [
-    "https://gun-relay.herokuapp.com/gun",
-    "https://peer.wallie.io/gun",
-    "https://gun.defucc.me/gun",
-    "https://a.talkflow.team/gun",
-    "https://lindanode.scobrudot.dev/gun",
-    "https://shogunnode.scobrudot.dev/gun",
-];
-
 const getRelays = async () => {
-  return await forceListUpdate();
+  let peers = await forceListUpdate();
+  peers.push(`http://localhost:${port}/gun`);
+  peers.push(`https://localhost:${sslPort}/gun`);
+  peers.filter((p) => p); // Remove empty/null peers
+  console.log("🔍 Peers:", peers);
+  return peers;
 };
 
-
-
-peers.push(`http://localhost:${port}/gun`);
-peers.push(`https://localhost:${sslPort}/gun`);
-
-
-peers.filter((p) => p); // Remove empty/null peers
 
 let server, sslServer, gun, sslGun;
 
@@ -180,14 +169,16 @@ if (useSSL) {
 
   // Load relays asynchronously and update peers
   if (peerify) {
-    getRelays().then(relays => {
-      console.log(`✓ Loaded ${relays.length} SSL relay peers`);
-      sslGun.opt({ peers: relays });
-    }).catch(error => {
-      console.warn(`⚠ Failed to load SSL relays: ${error.message}`);
-      console.log(`Using default SSL peer list`);
-      sslGun.opt({ peers: peers });
-    });
+    getRelays()
+      .then((relays) => {
+        console.log(`✓ Loaded ${relays.length} SSL relay peers`);
+        sslGun.opt({ peers: relays });
+      })
+      .catch((error) => {
+        console.warn(`⚠ Failed to load SSL relays: ${error.message}`);
+        console.log(`Using default SSL peer list`);
+        sslGun.opt({ peers: peers });
+      });
   } else {
     sslGun.opt({ peers: peers });
   }
@@ -225,14 +216,16 @@ if (useHTTP) {
 
   // Load relays asynchronously and update peers
   if (peerify) {
-    getRelays().then(relays => {
-      console.log(`✓ Loaded ${relays.length} relay peers`);
-      gun.opt({ peers: relays });
-    }).catch(error => {
-      console.warn(`⚠ Failed to load relays: ${error.message}`);
-      console.log(`Using default peer list`);
-      gun.opt({ peers: peers });
-    });
+    getRelays()
+      .then((relays) => {
+        console.log(`✓ Loaded ${relays.length} relay peers`);
+        gun.opt({ peers: relays });
+      })
+      .catch((error) => {
+        console.warn(`⚠ Failed to load relays: ${error.message}`);
+        console.log(`Using default peer list`);
+        gun.opt({ peers: peers });
+      });
   } else {
     gun.opt({ peers: peers });
   }
