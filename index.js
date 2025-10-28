@@ -155,7 +155,7 @@ if (useSSL) {
   console.log(`SSL Gun data path: ${dataPath}`);
 
   // Initialize SSL Gun with empty peers first, then update with relays
-  sslGun = Gun({
+  sslGun = new Gun({
     peers: [],
     web: sslServer,
     file: dataPath,
@@ -201,7 +201,7 @@ if (useHTTP) {
   console.log(`Gun data path: ${dataPath}`);
 
   // Initialize Gun with empty peers first, then update with relays
-  gun = Gun({
+  gun = new Gun({
     peers: [],
     web: server,
     file: dataPath,
