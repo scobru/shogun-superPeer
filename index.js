@@ -4,9 +4,14 @@ const fs = require("fs");
 const https = require("https");
 const http = require("http");
 const Gun = require("gun");
-const SEA = require("gun/sea");
-const rtc = require("gun/lib/webrtc");
+require("gun/sea");
+require("gun/lib/webrtc");
+require("gun/lib/radix");
+require("gun/lib/store");
+require("gun/lib/then");
+require("gun/lib/radisk");
 
+const { forceListUpdate } = require("shogun-relays");
 
 // Detect if running as pkg executable
 const isPkg = typeof process.pkg !== "undefined";
@@ -39,8 +44,8 @@ let config = {
     useHTTP: true,
     peerify: true,
     persistence: true,
-    port: 8080,
-    sslPort: 8443,
+    port: process.env.PORT || 8080,
+    sslPort: process.env.SSL_PORT || 8443,
     sslHost: "example.com",
   },
   logging: {
@@ -85,9 +90,13 @@ const peers = [
     "https://peer.wallie.io/gun",
     "https://gun.defucc.me/gun",
     "https://a.talkflow.team/gun",
-    "https://relay.shogun-eco.xyz/gun",
-    "https://v5g5jseqhgkp43lppgregcfbvi.srv.us/gun",
+    "https://lindanode.scobrudot.dev/gun",
+    "https://shogunnode.scobrudot.dev/gun",
 ];
+
+const getRelays = async () => {
+  return await forceListUpdate();
+};
 
 
 
@@ -156,16 +165,32 @@ if (useSSL) {
   const dataPath = path.join(baseDir, "data");
   console.log(`SSL Gun data path: ${dataPath}`);
 
+  // Initialize SSL Gun with empty peers first, then update with relays
   sslGun = Gun({
-    peers: peerify ? peers : [],
+    peers: [],
     web: sslServer,
     file: dataPath,
     radisk: persistence,
-    axe: false,
+    axe: true,
+    wire: true,
   });
 
   sslGun._.on("in", ssLogIn);
   sslGun._.on("out", ssLogOut);
+
+  // Load relays asynchronously and update peers
+  if (peerify) {
+    getRelays().then(relays => {
+      console.log(`✓ Loaded ${relays.length} SSL relay peers`);
+      sslGun.opt({ peers: relays });
+    }).catch(error => {
+      console.warn(`⚠ Failed to load SSL relays: ${error.message}`);
+      console.log(`Using default SSL peer list`);
+      sslGun.opt({ peers: peers });
+    });
+  } else {
+    sslGun.opt({ peers: peers });
+  }
 }
 
 if (useHTTP) {
@@ -184,17 +209,33 @@ if (useHTTP) {
   const dataPath = path.join(baseDir, "data");
   console.log(`Gun data path: ${dataPath}`);
 
+  // Initialize Gun with empty peers first, then update with relays
   gun = Gun({
-    peers: peerify ? peers : [],
+    peers: [],
     web: server,
     file: dataPath,
     localStorage: false,
     radisk: persistence && !useSSL,
-    axe: false,
+    axe: true,
+    wire: true,
   });
 
   gun._.on("in", logIn);
   gun._.on("out", logOut);
+
+  // Load relays asynchronously and update peers
+  if (peerify) {
+    getRelays().then(relays => {
+      console.log(`✓ Loaded ${relays.length} relay peers`);
+      gun.opt({ peers: relays });
+    }).catch(error => {
+      console.warn(`⚠ Failed to load relays: ${error.message}`);
+      console.log(`Using default peer list`);
+      gun.opt({ peers: peers });
+    });
+  } else {
+    gun.opt({ peers: peers });
+  }
 }
 
 setInterval(logPeers, config.logging.logPeersInterval); //Log peer list

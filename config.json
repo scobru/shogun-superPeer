@@ -4,7 +4,7 @@
     "useHTTP": true,
     "peerify": true,
     "persistence": true,
-    "port": 8080,
+    "port": 8765,
     "sslPort": 8443,
     "sslHost": "example.com"
   },

@@ -4,115 +4,63 @@ A persistent, SEA-enabled, [GunDB](https://github.com/amark/gun) relay server fo
 runs a Gun node on both HTTP and HTTPS. Technically, it is running two nodes that are syncing with each-other locally.
 These behaviors can be enabled, disabled, and mix-matched.
 
-**✨ Now available as standalone executables!** No Node.js installation required.
+**🚀 Simple Node.js Gun Relay Server** - Easy to run and deploy.
 
 Forked from [superPeer](https://github.com/TensorTom/superpeer)
 
-## 📚 Documentation
-
-- **[Quick Start Guide](QUICK_START.md)** - For end users (non-technical)
-- **[Build Guide](BUILD.md)** - How to build executables
-- **[Release Guide](RELEASES.md)** - For maintainers creating releases
-- **[Main README](#)** - You are here
-
 ## ✨ Features
 
-- 🚀 **Standalone Executables** - No dependencies required
 - 💾 **Data Persistence** - Stores data to disk
 - 🔐 **SEA Support** - Security, Encryption, Authorization
 - 🌐 **HTTP & HTTPS** - Dual server support
 - 🔄 **Auto-sync** - Peers sync with each other
 - 🐳 **Docker Ready** - Includes Dockerfile
 - ⚡ **WebRTC Support** - Peer-to-peer connections
+- 🚀 **Simple Setup** - Just Node.js required
 
 ### Quickstart
 
-#### Option 1: Use Prebuilt Executable (Easiest)
+**Prerequisites:**
+- Node.js (v16 or higher)
+- npm or yarn
 
-Download the appropriate executable for your platform from the [releases page](https://github.com/scobru/shogun-superPeer/releases):
+**Installation:**
 
-- **Windows**: `shogun-superPeer.exe`
-- **Linux**: `shogun-superPeer-linux`
-- **macOS**: `shogun-superPeer-macos`
-
-Then simply run it:
-
-**Windows:**
-```
-shogun-superPeer.exe
-```
-
-**Linux/macOS:**
-```
-chmod +x shogun-superPeer-linux  # or shogun-superPeer-macos
-./shogun-superPeer-linux          # or ./shogun-superPeer-macos
-```
-
-The relay will start on port 8080 by default.
-
-#### Option 2: Build from Source
-
-First:
-
-```
+```bash
+# Clone the repository
 git clone https://github.com/scobru/shogun-superPeer.git
 cd shogun-superPeer
+
+# Install dependencies
+npm install
+
+# Start the server
+npm start
 ```
 
-If you're using SSL:
+**For SSL/HTTPS (optional):**
 
-```
+```bash
+# Update domain in config
 sed -i 's/example.com/yourdomain.com/g' index.js
-```
 
-If you're using LetsEncrypt:
-
-```
+# Add SSL certificates
 mkdir -p cert
 cp /etc/letsencrypt/live/yourdomain.com/cert.pem cert/
 cp /etc/letsencrypt/live/yourdomain.com/privkey.pem cert/
 ```
 
-Then:
+**Run in background (Linux):**
 
-```
-npm install
-npm start
-```
-
-To run in background between terminal sessions (On Linux):
-
-```
+```bash
+# Install supervisor globally
 npm install supervisor -g
+
+# Run continuously
 nohup npm run start-continuous > superPeer.out 2>&1 &
 ```
 
-### Building Standalone Executables
-
-To create standalone executables that don't require Node.js installed:
-
-```bash
-# Install dependencies
-npm install
-
-# Build for all platforms (Windows, Linux, macOS)
-npm run build:all
-
-# Or build for specific platform
-npm run build:win      # Windows only
-npm run build:linux    # Linux only
-npm run build:mac      # macOS only
-```
-
-Executables will be created in the `dist/` folder.
-
-**Note:** The executables are self-contained and include:
-- Node.js runtime
-- All dependencies
-- Gun database
-- Web interface
-
-Users can simply run the executable without installing anything else!
+The relay will start on port 8080 by default.
 
 ### Options
 

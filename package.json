@@ -6,31 +6,10 @@
   "bin": "index.js",
   "type": "commonjs",
   "scripts": {
-    "start": "npm run server",
-    "start-continuous": "supervisor -t -i . server.js",
-    "server": "node server.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "postbuild": "node post-build.js",
-    "build": "npx pkg . --out-path dist && node post-build.js",
-    "build:win": "npx pkg . --targets node18-win-x64 --out-path dist && node post-build.js",
-    "build:linux": "npx pkg . --targets node18-linux-x64 --out-path dist && node post-build.js",
-    "build:mac": "npx pkg . --targets node18-macos-x64 --out-path dist && node post-build.js",
-    "build:all": "npx pkg . --targets node18-win-x64,node18-linux-x64,node18-macos-x64 --out-path dist && node post-build.js"
-  },
-  "pkg": {
-    "targets": [
-      "node18-win-x64",
-      "node18-linux-x64",
-      "node18-macos-x64"
-    ],
-    "scripts": [
-      "node_modules/gun/**/*.js"
-    ],
-    "assets": [
-      "view/**/*",
-      "node_modules/gun/**/*"
-    ],
-    "outputPath": "dist"
+    "start": "node index.js",
+    "start-continuous": "supervisor -t -i . index.js",
+    "server": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
@@ -52,11 +31,8 @@
   "dependencies": {
     "@peculiar/webcrypto": "^1.4.0",
     "express": "^4.17.1",
-    "gun": "^0.2019.612",
+    "gun": "git+https://github.com/amark/gun.git",
+    "shogun-relays": "^1.0.4",
     "text-encoding": "^0.7.0"
-  },
-  "devDependencies": {
-    "fs-extra": "^11.1.1",
-    "pkg": "^5.8.1"
   }
 }
